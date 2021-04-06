@@ -33,19 +33,19 @@ for root, dirs, files in os.walk(source_dir):
             num_lines_in_file = len(open(file).readlines())
             if num_lines_in_file == 1:
                 for line in open(file,'r'):
-                    one_data = line.split(sep="~")
-                    for i in range(len(one_data)):
-                        if (one_data[i].startswith("TRN")):
-                             file_trn02 = re.sub('~','',one_data[i].split('*')[2])           # TRN;02
-                             file_trn03 = re.sub('~','',one_data[i].split('*')[3])           # TRN;03
-                        if (one_data[i].startswith("N1*PR")):
-                             file_payer = re.sub('~','',one_data[i].split('*')[2]).rstrip()  # N1;02
-                        if (one_data[i].startswith("N1*PE")):
-                             file_payee = re.sub('~','',one_data[i].split('*')[2]).rstrip()  # N1;02
-                             file_npi = re.sub('~','',one_data[i].split('*')[4])             # N1;04
-                        if (one_data[i].startswith("CLP")):
-                             claim = re.sub('~','',one_data[i].split('*')[1])                # CLP;01
-                             clp02 = re.sub('~','',one_data[i].split('*')[2])                # CLP;02
+                    one_line_data = line.split(sep="~")
+                    for i in range(len(one_line_data)):
+                        if (one_line_data[i].startswith("TRN")):
+                             file_trn02 = re.sub('~','',one_line_data[i].split('*')[2])           # TRN;02
+                             file_trn03 = re.sub('~','',one_line_data[i].split('*')[3])           # TRN;03
+                        if (one_line_data[i].startswith("N1*PR")):
+                             file_payer = re.sub('~','',one_line_data[i].split('*')[2]).rstrip()  # N1;02
+                        if (one_line_data[i].startswith("N1*PE")):
+                             file_payee = re.sub('~','',one_line_data[i].split('*')[2]).rstrip()  # N1;02
+                             file_npi = re.sub('~','',one_line_data[i].split('*')[4])             # N1;04
+                        if (one_line_data[i].startswith("CLP")):
+                             claim = re.sub('~','',one_line_data[i].split('*')[1])                # CLP;01
+                             clp02 = re.sub('~','',one_line_data[i].split('*')[2])                # CLP;02
                              write_to_csv(file, file_trn02, file_trn03, file_payer, file_payee, file_npi, claim, clp02)
             else:
                 for line in open(file,'r'):

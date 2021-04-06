@@ -13,7 +13,9 @@ import os, csv, re, time, sys
 #        OutputText font and color changes
 #        option to select (default) .835 or contains a string in filename
 #        Progress bar
-#   Current Version = v5
+#        Make Input labels aligned
+#        Allow app to be reset/restarted for multiple runs
+# Assumptions: Standard Format, segment delimiter is '*'
 
 class App(tk.Frame):
 
@@ -40,25 +42,33 @@ class App(tk.Frame):
         footerFrame.columnconfigure(1, weight=1)  # ok
         footerFrame.rowconfigure(1,weight=1)  # ok, no change?
         
+         # File Pattern Input
+        filePatternLbl = tk.Label(inputsFrame, text="File Pattern:")
+        filePatternLbl.grid(row=0, column=0, sticky='WE', padx=5, pady=2)
+
+        self.filePatternTxt = tk.Entry(inputsFrame, state="normal")
+        self.filePatternTxt.grid(row=0, column=1, columnspan=7, sticky="WE", padx=5, pady=2)
+        self.filePatternTxt.insert(0, str(file_pattern))
+
         # Source Directory Prompt
         inFolderLbl = tk.Label(inputsFrame, text="Folder with 835s:")
-        inFolderLbl.grid(row=0, column=0, sticky='WE', padx=5, pady=2)
+        inFolderLbl.grid(row=1, column=0, sticky='WE', padx=5, pady=2)
         
         self.inFolderTxt = tk.Entry(inputsFrame, state="disabled")
-        self.inFolderTxt.grid(row=0, column=1, columnspan=7, sticky="WE", padx=5, pady=2)
+        self.inFolderTxt.grid(row=1, column=1, columnspan=7, sticky="WE", padx=5, pady=2)
         
         self.inFolderBtn = tk.Button(inputsFrame, text="Browse ...", command=self.browse_for_open_loc)
-        self.inFolderBtn.grid(row=0, column=10, sticky='E', padx=5, pady=2)
-        
-        outFolderLbl = tk.Label(inputsFrame, text="Save Results to:")
-        outFolderLbl.grid(row=1, column=0, sticky='WE', padx=5, pady=2)
+        self.inFolderBtn.grid(row=1, column=10, sticky='E', padx=5, pady=2)
         
         # Save Results Prompt
+        outFolderLbl = tk.Label(inputsFrame, text="Save Results to:")
+        outFolderLbl.grid(row=2, column=0, sticky='WE', padx=5, pady=2)
+  
         self.outFolderTxt = tk.Entry(inputsFrame, state="disabled")
-        self.outFolderTxt.grid(row=1, column=1, columnspan=7, sticky="WE", padx=5, pady=2)       
+        self.outFolderTxt.grid(row=2, column=1, columnspan=7, sticky="WE", padx=5, pady=2)       
 
         self.outFolderBtn = tk.Button(inputsFrame, text="Browse ...", command=self.browse_for_save_loc)
-        self.outFolderBtn.grid(row=1, column=10, sticky='E', padx=5, pady=2)
+        self.outFolderBtn.grid(row=2, column=10, sticky='E', padx=5, pady=2)
         
         # Results Output Display
         self.outputText = tk.scrolledtext.ScrolledText(outputFrame, wrap='word', height=5, width=10, font=('',8), fg="#333333")
@@ -87,7 +97,9 @@ class App(tk.Frame):
         self.source_dir = os.path.normpath(open_loc)
     
     def browse_for_save_loc(self):
-        save_loc = os.path.normpath(askdirectory(title="Browse for where to save output results..."))
+        save_loc = os.path.normpath(askdirectory(
+            # initialdir=expanduser(pathvar.get()),
+            title="Browse for where to save output results..."))
         self.outFolderTxt.configure(state='normal')
         self.outFolderTxt.delete(0,tk.END)
         self.outFolderTxt.insert(0, str(save_loc))
@@ -120,13 +132,18 @@ class App(tk.Frame):
         self.okBtn.configure(state='disabled')
         self.inFolderBtn.configure(state='disabled')
         self.outFolderBtn.configure(state='disabled')
+        self.filePatternTxt.configure(state = 'disabled')
 
     def enable_widgets(self):
         self.okBtn.configure(state='normal')
         self.inFolderBtn.configure(state='normal')
         self.outFolderBtn.configure(state='normal')
+        self.filePatternTxt.configure(state = 'normal')
 
     def parse_835(self):
+        if len(self.filePatternTxt.get()) > 0:
+            file_pattern = self.filePatternTxt.get()
+            self.print_output(str(f'Pattern used: {file_pattern}\n'))
         self.disable_widgets()
         if len(self.outputText.index(tk.END)) != 0:
             self.print_output(str(f'\n\n'))
@@ -139,27 +156,50 @@ class App(tk.Frame):
                 if not file_exists:
                     csv_writer.writerow(outfile_headers)
             self.print_output(str(f'Beginning processing...\n'))
-            # Iterate through each '.835' file in current directory and parse out desired values
+            self.print_output(str(f'Parsing with file pattern: {file_pattern}\n'))
+            # Iterate through each '835' file in current directory and parse out desired values
+            # Consider if file is split across lines (standard) or all in 1 line (uncommon)
             # Write desired values out as each CLP segment is found
             for root, dirs, files in os.walk(self.source_dir):
                 for file in files:
-                    if file.endswith('.835') or (".835" in file):
+                    if file.endswith(file_pattern) or (file_pattern in file):
                         self.print_output(str(f'Reading file: {file}\n'))
                         file_trn02, file_trn03, file_payer, file_payee, file_npi = "", "", "", "", ""
-                        for line in open(os.path.join(self.source_dir,file),'r'):
-                            if (line.startswith("TRN")):
-                                file_trn02 = re.sub('~','',line.split('*')[2])           # TRN;02
-                                file_trn03 = re.sub('~','',line.split('*')[3])           # TRN;03
-                            if (line.startswith("N1*PR")):
-                                file_payer = re.sub('~','',line.split('*')[2]).rstrip()  # N1;02
-                            if (line.startswith("N1*PE")):
-                                file_payee = re.sub('~','',line.split('*')[2]).rstrip()  # N1;02
-                                file_npi = re.sub('~','',line.split('*')[4])             # N1;04
-                            if (line.startswith("CLP")):
-                                claim = re.sub('~','',line.split('*')[1])                # CLP;01
-                                clp02 = re.sub('~','',line.split('*')[2])                # CLP;02
-                                self.write_to_csv(file, file_trn02, file_trn03, file_payer, file_payee, file_npi, claim, clp02)
-                self.print_output(str(f'Completed stripping 835s in: {self.source_dir} to {outfile_name}'))
+                        num_lines_in_file = len(open(os.path.join(self.source_dir,file)).readlines())
+                        # One Line 835
+                        if num_lines_in_file == 1:
+                            for line in open(os.path.join(self.source_dir,file),'r'):
+                                one_line_data = line.split(sep="~")
+                                for i in range(len(one_line_data)):
+                                    if (one_line_data[i].startswith("TRN")):
+                                         file_trn02 = re.sub('~','',one_line_data[i].split('*')[2])           # TRN;02
+                                         file_trn03 = re.sub('~','',one_line_data[i].split('*')[3])           # TRN;03
+                                    if (one_line_data[i].startswith("N1*PR")):
+                                         file_payer = re.sub('~','',one_line_data[i].split('*')[2]).rstrip()  # N1;02
+                                    if (one_line_data[i].startswith("N1*PE")):
+                                         file_payee = re.sub('~','',one_line_data[i].split('*')[2]).rstrip()  # N1;02
+                                         file_npi = re.sub('~','',one_line_data[i].split('*')[4])             # N1;04
+                                    if (one_line_data[i].startswith("CLP")):
+                                         claim = re.sub('~','',one_line_data[i].split('*')[1])                # CLP;01
+                                         clp02 = re.sub('~','',one_line_data[i].split('*')[2])                # CLP;02
+                                         self.write_to_csv(file, file_trn02, file_trn03, file_payer, file_payee, file_npi, claim, clp02)
+                        else:
+                            for line in open(os.path.join(self.source_dir,file),'r'):
+                                if (line.startswith("TRN")):
+                                    file_trn02 = re.sub('~','',line.split('*')[2])           # TRN;02
+                                    file_trn03 = re.sub('~','',line.split('*')[3])           # TRN;03
+                                if (line.startswith("N1*PR")):
+                                    file_payer = re.sub('~','',line.split('*')[2]).rstrip()  # N1;02
+                                if (line.startswith("N1*PE")):
+                                    file_payee = re.sub('~','',line.split('*')[2]).rstrip()  # N1;02
+                                    file_npi = re.sub('~','',line.split('*')[4])             # N1;04
+                                if (line.startswith("CLP")):
+                                    claim = re.sub('~','',line.split('*')[1])                # CLP;01
+                                    clp02 = re.sub('~','',line.split('*')[2])                # CLP;02
+                                    self.write_to_csv(file, file_trn02, file_trn03, file_payer, file_payee, file_npi, claim, clp02)
+            self.print_output(str(f'Completed stripping 835s in: {self.source_dir} to {outfile_name}'))
+
+
         self.enable_widgets()
 
     # def refresh(self):
@@ -174,6 +214,7 @@ if __name__ == "__main__":
     outfile_name = "Parsed835Goodies" +" " + time.strftime("%Y-%m-%d-%H%M%S") + ".csv"
     outfile_headers = ['FILENAME', 'TRN02', 'TRN03', 'PAYER', 'PAYEE', 'NPI', 'CLAIM', 'CLP02']
     file_exists = os.path.isfile(outfile_name)
+    file_pattern = ".835"
 
     root = tk.Tk()
     root.wm_title('835 File Parser')
