@@ -1,5 +1,8 @@
 # Non-Template items
 Old/
+Parsed835*
+*.835
+*.835*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
