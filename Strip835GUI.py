@@ -1,9 +1,11 @@
-import os, csv, re, time, sys
+import os, csv, re, time,sys
+import queue as queue
+import threading
 import tkinter as tk
 from tkinter.filedialog import askdirectory
 from tkinter.messagebox import showerror, askyesno
 from tkinter.font import Font
-from tkinter import scrolledtext
+from tkinter import scrolledtext, ttk
 
 # To DO: Make output text uneditable, method call needed for writing
 #        Help button/version #
@@ -28,7 +30,7 @@ class App(tk.Frame):
         self.source_dir = ""
         self.file_pattern = ""
         self.__run_counter = 1
-        self.__outfile_name = self.get_new_outfile_name
+        self.__outfile_name = self.get_new_outfile_name()
         self.__file_exists = os.path.isfile(self.__outfile_name)
 
         # Frame Setup
@@ -40,11 +42,15 @@ class App(tk.Frame):
         outputFrame.grid(row=1, columnspan=10, sticky='NSEW', padx=5, pady=5, ipadx=5, ipady=5)
         outputFrame.columnconfigure(1,weight=1)
         outputFrame.rowconfigure(0,weight=1)
+
+        progressFrame = tk.Frame(root)
+        progressFrame.columnconfigure(1, weight=1)
+        progressFrame.rowconfigure(1,weight=1)
         
         footerFrame = tk.Label(root)
         footerFrame.grid(row=2, columnspan=10, sticky='EW', padx=5, pady=1)
         footerFrame.columnconfigure(1, weight=1)
-        footerFrame.rowconfigure(1,weight=1)
+        footerFrame.rowconfigure(2,weight=1)
         
          # File Pattern Input
         filePatternLbl = tk.Label(inputsFrame, text="File Pattern", anchor = 'w')
@@ -81,7 +87,12 @@ class App(tk.Frame):
 
         self.xscrollbar = tk.Scrollbar(outputFrame, orient='horizontal', command=self.outputText.xview)
         self.outputText.configure(xscrollcommand=self.xscrollbar.set)
-        self.xscrollbar.grid(row=2, column=1, sticky="EW")
+        self.xscrollbar.grid(row=2, column=1, sticky='EW')
+
+        # Progress Bar
+        self.progressBar = ttk.Progressbar(progressFrame, orient="horizontal", length=200, mode="indeterminate")
+        #self.progressBar.pack(side=TOP)
+        self.progressBar.grid(row=2, column=1, stick='EW')
 
         # Run and Close
         self.okBtn = tk.Button(footerFrame, text="Run", command=self.process_run)
@@ -149,7 +160,30 @@ class App(tk.Frame):
     def get_new_outfile_name(self):
         return self.__OUTFILE_PREFIX + " " + time.strftime("%Y-%m-%d-%H%M%S") + ".csv"
 
+    # def progress(self):
+    #     self.prog_bar = ttk.Progressbar(
+    #         self.master, orient="horizontal",
+    #         length=200, mode="indeterminate"
+    #         )
+    #     self.prog_bar.pack(side=TOP)
+
+    def process_queue(self):
+        try:
+            msg = self.queue.get(0)
+            # Show result of the task if needed
+            #self.prog_bar.stop()
+            self.progressBar.stop()
+        except queue.Empty:
+            self.master.after(100, self.process_queue)
+
     def process_run(self):
+        #self.progress()
+        #self.prog_bar.start()
+        self.progressBar.start()
+        self.queue = queue.Queue()
+        ThreadedTask(self.queue).start()
+        self.master.after(100, self.process_queue)
+
         if self.__run_counter != 1:
             if tk.messagebox.askyesno("Confirm Run", "Are you sure you want to run again?"):
                 self.print_output(f'\n\n\n*****Starting Run #{self.__run_counter} *****\n')
@@ -228,6 +262,15 @@ class App(tk.Frame):
     #     self.refresh()
     #     threading.Thread(target=doingALotOfStuff).start()
 
+class ThreadedTask(threading.Thread):
+    def __init__(self, queue):
+        threading.Thread.__init__(self)
+        self.queue = queue
+    def run(self):
+        time.sleep(5)  # Simulate long running process
+        self.queue.put("Task finished")
+
+
 if __name__ == "__main__":
     root = tk.Tk()
     root.wm_title('835 File Parser')
@@ -251,3 +294,4 @@ Helpful Sites along the way
    for output and trace back if debug enabled:
     pyinstaller file.py 2> build.txt
 """
+
