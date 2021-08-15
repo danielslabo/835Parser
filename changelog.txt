@@ -1,0 +1,65 @@
+# Changelog
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+- Format an 835 file to have no new lines to better handle variable lines. Would then asseumes delimiter is '~'
+- Incorproate using a Queue, potentially for processing thread worker's outputs
+- Menu bar with Help, About, Chang Log sections
+- Fix progress bar's slight back ticks, should only smoothly move forward
+- Cleanup variable names, variable scoping, and add proper class and function comments
+- Enable thread to be stopped when app is closed. Thread currently continues in background
+- Create Standalone executable. Prior one is outdated and removed
+- Fix so that '00000' value when opened in excel doesn't become '0'; surround with quotes?
+- Handle variable line length 835s. Consider using replace('\n','') on whole file content so it doesn't
+  matter how many lines long the 835 is (including variable)
+- Handle I/O errors by accounting for exceptions. Currently not handling any
+- Update icon to free or unlicensed image. Unclear on limits of currently licensed one
+
+## [3.0.0] - 2021-08-14
+### Added
+- Thread processing so GUI doesn't freeze while running
+- Progress bar
+
+### Changed
+- Decomposed parsing 835s into several methods
+- Fixed typos and reworded comments
+
+### Removed
+- Comment section on pyinstaller steps
+
+### Fixed
+- Program can run more than once without having to re-open
+
+## [2.0.0] - YYYY-MM-DD
+### Added
+- User can specify file pattern
+- Parse PLB segment data into last column of output
+
+### Changed
+- Can handle 835s where all data is in one line of the file
+- Output message box is no longer editable
+
+### Removed
+- Logic to refresh the app's fields and data should an unimplemented refresh button be clicked
+- Onefile executable version of program as it was out of date
+- Support for non-GUI version
+
+### Fixed
+- Processing output's numerous extra new lines and first character missing
+- Comment typos and unclear function names
+
+## [1.0.0] - YYYY-MM-DD
+### Added
+- Initial Release
+- Program uses a GUI for input options
+
+## Explanation of Sections:
+- Added for new features.
+- Changed for changes in existing functionality.
+- Deprecated for soon-to-be removed features.
+- Removed for now removed features.
+- Fixed for any bug fixes.
+- Security in case of vulnerabilities.
