@@ -1,22 +1,33 @@
 # Changelog
 All notable changes to this project will be documented in this file.
+For most current status see https://github.com/danielslabo/835Parser
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 - Format an 835 file to have no new lines to better handle variable lines. Would then asseumes delimiter is '~'
-- Incorproate using a Queue, potentially for processing thread worker's outputs
-- Menu bar with Help, About, Chang Log sections
+- Incorporate using a Queue, potentially for processing thread worker's outputs
 - Fix progress bar's slight back ticks, should only smoothly move forward
 - Cleanup variable names, variable scoping, and add proper class and function comments
-- Enable thread to be stopped when app is closed. Thread currently continues in background
 - Create Standalone executable. Prior one is outdated and removed
 - Fix so that '00000' value when opened in excel doesn't become '0'; surround with quotes?
 - Handle variable line length 835s. Consider using replace('\n','') on whole file content so it doesn't
   matter how many lines long the 835 is (including variable)
 - Handle I/O errors by accounting for exceptions. Currently not handling any
 - Update icon to free or unlicensed image. Unclear on limits of currently licensed one
+- Fix so user can choose to append to existing results file on subsequent runs. Currently appends but this
+  is unintentional and a coincidence
+- Verify and add setting + logic for if subdirectories should be included in file scan
+
+## [3.1.0] - 2021-08-15
+### Added
+- Menu bar added with submenus of File, Settings, and Help
+- Help menu opens Help, and Changelog files
+
+### Changed
+- Made thread for processing 835 files a daemon thread so will stop when main app closes
+- Some variables were made private
 
 ## [3.0.0] - 2021-08-14
 ### Added

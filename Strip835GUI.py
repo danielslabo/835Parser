@@ -4,7 +4,7 @@ import tkinter as tk
 from tkinter.filedialog import askdirectory
 from tkinter.messagebox import showerror, askyesno
 from tkinter.font import Font
-from tkinter import scrolledtext, ttk
+from tkinter import scrolledtext, ttk, messagebox
 # import queue as queue # TODO
 '''
 Program parses an 835 file.
@@ -25,10 +25,34 @@ class App(tk.Frame):
 
         self.outfile_path = ""
         self.source_dir = ""
-        self.file_pattern = ""
+        self.__file_pattern = ""
+        self.__append_runs = tk.BooleanVar()
+        self.__append_runs.set(1)
         self.__run_counter = 1
         self.__outfile_name = self.get_new_outfile_name()
         self.__file_exists = os.path.isfile(self.__outfile_name)
+
+        # Menu Bar
+        menubar = tk.Menu(self.master)
+        self.master.config(menu=menubar)
+
+        # Menu Bar - File
+        filemenu = tk.Menu(menubar, tearoff=0)
+        filemenu.add_command(label="Open", command=self.browse_for_open_loc)
+        filemenu.add_command(label="Save", command=self.browse_for_save_loc)
+        filemenu.add_separator()
+        filemenu.add_command(label="Exit", command=self.quit)
+        menubar.add_cascade(label='File', menu=filemenu)
+        # Menu Bar - Settings
+        settingsmenu = tk.Menu(menubar, tearoff=0)
+        settingsmenu.add_checkbutton(
+            label="Append subsequent runs", onvalue=1, offvalue=0, variable=self.__append_runs)
+        menubar.add_cascade(label='Settings', menu=settingsmenu)
+        # Mennu Bar - Help
+        helpmenu = tk.Menu(menubar, tearoff=0)
+        helpmenu.add_command(label="Help", command=self.help)
+        helpmenu.add_command(label="Change Log", command=self.changelog)
+        menubar.add_cascade(label="Help", menu=helpmenu)
 
         # Frame Setup
         inputsFrame = tk.LabelFrame(root, text="1. Enter File Details: ")
@@ -96,6 +120,36 @@ class App(tk.Frame):
         
         closeBtn = tk.Button(footerFrame, text="Close", command=self.quit)
         closeBtn.grid(row=2, column=3, sticky='SE', padx=5, pady=2, ipadx=20)
+
+    def changelog(self):
+        try:
+            with open(self.resource_path('changelog.txt'),mode='r') as changelogfile:
+                msg = changelogfile.read()
+            newWindow = tk.Toplevel(self.master)
+            newWindow.title('Change Log')
+            newWindow.resizable(width=False, height=False)
+
+            changelogFrame = tk.Frame(newWindow)
+            changelogFrame.pack()
+            
+            txtWidget = tk.scrolledtext.ScrolledText(changelogFrame, wrap='none', state='disabled')
+            txtWidget.configure(state='normal', font='TkFixedFont')
+            txtWidget.insert(tk.END, str(msg))
+            txtWidget.configure(state='disabled')
+
+            xscrollbar = tk.Scrollbar(changelogFrame, orient='horizontal', command=txtWidget.xview)
+            txtWidget.configure(xscrollcommand=xscrollbar.set)
+
+            txtWidget.grid(row=0, column=0, sticky='EW')
+            xscrollbar.grid(row=1, column=0, sticky='EW')
+        except: pass
+
+    def help(self):
+        try:
+            with open(self.resource_path('help.txt'),mode='r') as helpfile:
+                msg = helpfile.read()
+            tk.messagebox.showinfo('Help', message=msg, icon='question')
+        except: pass
 
     def quit(self):
         root.destroy()
@@ -237,15 +291,15 @@ class App(tk.Frame):
             if not self.__file_exists: csv_writer.writerow(self.__OUTFILE_HEADERS)
 
         self.print_output(str(f'Beginning processing...\n'))
-        self.print_output(str(f'Parsing with file pattern: {self.file_pattern}\n'))
-        self.process_835s(self.file_pattern, self.source_dir)
+        self.print_output(str(f'Parsing with file pattern: {self.__file_pattern}\n'))
+        self.process_835s(self.__file_pattern, self.source_dir)
         self.print_output(str(f'Completed stripping 835s in: {self.source_dir}\n'))
         self.print_output(str(f'Results saved to: {self.__outfile_name}'))
         self.__run_counter += 1
 
     def setup_processing(self):
         if len(self.filePatternTxt.get()) > 0:
-            self.file_pattern = self.filePatternTxt.get()
+            self.__file_pattern = self.filePatternTxt.get()
         if len(self.inFolderTxt.get()) == 0 or len(self.outFolderTxt.get()) == 0:
             self.warn_missing_loc()
         else:
@@ -260,7 +314,7 @@ class App(tk.Frame):
                 self.begin_progressbar()
                 #self.queue = queue.Queue()
                 #ThreadedTask(self.queue).start()
-                threading.Thread(target=self.begin_processing).start()
+                threading.Thread(target=self.begin_processing, daemon=True).start()
                 #self.master.after(100, self.process_queue)
 
 class ThreadedTask(threading.Thread): # Unused
@@ -291,4 +345,7 @@ Notes for pyinstaller
    else debug mode, onefolder, and no windowed
    for output and trace back if debug enabled:
     pyinstaller file.py 2> build.txt
+
+Log Queue Handler
+https://beenje.github.io/blog/posts/logging-to-a-tkinter-scrolledtext-widget/
 """

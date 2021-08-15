@@ -32,6 +32,8 @@ Run as a direct python program via shell. Offers a GUI for a user to specify the
 Run as a direct python program via shell. Assumes the 835 files are in the same directory the program is located and ran from. Would need to modify the file pattern in the program here diretly. Outputs to same directory. This
 version is out of date and no longer updated.
 
+### Strip835.exe
+TBD
 
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
@@ -41,14 +43,3 @@ Please make sure to update tests as appropriate.
 ## License
 [APACHE 2.0](https://choosealicense.com/licenses/apache-2.0/)
 =======
-
-## Running the Program
-
-### Strip835Files.py
-Run as a direct python program via shell. Assumes the 835 files are in the same directory the program is located and ran from; outputs to same directory. File patterns other than standard .835 would need to be updated in this program's code directly.
-
-### Strip835GUI.py
-Run as a direct python program via shell. Offers a GUI for a user to specify the source directory and the output directory. Allows a user to specify the file pattern to use as well. Uses associated ico and png files. 
-
-### Strip835.exe
-TBD

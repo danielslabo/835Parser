@@ -1,0 +1,12 @@
+To run this program:
+1. Specify the folder where the desired 835 files to be parsed are located.
+2. Specify where the parsed results should be saved to
+3. Optionally, specify the file pattern the program should use to identify a file as an applicable file to parse. 
+
+The program will look for any files containing or ending with the indicated pattern.
+
+In the settings menu one can toggle whether subsequent runs should append to the initial run's results file or not.
+
+For issues with the program or results, feature requests, or questions, please reach out directly or open an issue on github: https://github.com/danielslabo/835Parser
+
+Current version: 3.1.0
