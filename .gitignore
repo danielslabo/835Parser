@@ -3,6 +3,7 @@ Old/
 Parsed835*
 *.835
 *.835*
+Sample_Files/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -6,14 +6,17 @@ from tkinter.filedialog import askdirectory
 from tkinter.messagebox import showerror, askyesno
 from tkinter.font import Font
 from tkinter import scrolledtext, ttk
-
-# To DO: Make output text uneditable, method call needed for writing
-#        Help button/version #
-#        Standalone work and taskbar icon
-#        Multithreaded: update display, progress bar, interrupted run message
-#        OutputText font and color changes
-#        Progress bar
-# Assumptions: Standard Format, segment delimiter is '*'
+import time #pause
+'''
+To DO: 
+       Make output text uneditable, method call needed for writing
+       Help button/version #
+       Standalone work and taskbar icon
+       Multithreaded: update display, progress bar, interrupted run message
+       OutputText font and color changes
+       Progress bar
+       Assumptions: Standard Format, segment delimiter is '*'
+'''
 
 class App(tk.Frame):
     __OUTFILE_PREFIX = "Parsed835Goodies"
@@ -44,11 +47,12 @@ class App(tk.Frame):
         outputFrame.rowconfigure(0,weight=1)
 
         progressFrame = tk.Frame(root)
+        progressFrame.grid(row=2, columnspan=10, sticky='WE', padx=5, pady=5)
         progressFrame.columnconfigure(1, weight=1)
         progressFrame.rowconfigure(1,weight=1)
         
         footerFrame = tk.Label(root)
-        footerFrame.grid(row=2, columnspan=10, sticky='EW', padx=5, pady=1)
+        footerFrame.grid(row=3, columnspan=10, sticky='EW', padx=5, pady=1)
         footerFrame.columnconfigure(1, weight=1)
         footerFrame.rowconfigure(2,weight=1)
         
@@ -90,11 +94,10 @@ class App(tk.Frame):
         self.xscrollbar.grid(row=2, column=1, sticky='EW')
 
         # Progress Bar
-        self.progressBar = ttk.Progressbar(progressFrame, orient="horizontal", length=200, mode="indeterminate")
-        #self.progressBar.pack(side=TOP)
-        self.progressBar.grid(row=2, column=1, stick='EW')
+        self.progressBar = ttk.Progressbar(progressFrame, orient="horizontal", length=200, mode="determinate")
+        # self.progressBar.grid(row=2, column=1, stick='EW') # Hide to start
 
-        # Run and Close
+        # Run and Close       
         self.okBtn = tk.Button(footerFrame, text="Run", command=self.process_run)
         self.okBtn.grid(row=2, column=2, sticky='SE', padx=5, pady=2, ipadx=27)
         
@@ -132,7 +135,7 @@ class App(tk.Frame):
 
     def warn_missing_loc(self):
         tk.messagebox.showerror(title="Error- Did you forget??"
-            ,message="Please specify both an input and output folder location")
+            ,message="Please specify an input and output folder location")
 
     def print_output(self,text):
         self.outputText.configure(state='normal')
@@ -160,37 +163,48 @@ class App(tk.Frame):
     def get_new_outfile_name(self):
         return self.__OUTFILE_PREFIX + " " + time.strftime("%Y-%m-%d-%H%M%S") + ".csv"
 
-    # def progress(self):
-    #     self.prog_bar = ttk.Progressbar(
-    #         self.master, orient="horizontal",
-    #         length=200, mode="indeterminate"
-    #         )
-    #     self.prog_bar.pack(side=TOP)
+    def begin_progressbar(self):
+        self.disable_widgets()
+        self.progressBar.grid(row=2, column=1, stick='EW')
+        self.progressBar.start()
 
-    def process_queue(self):
-        try:
-            msg = self.queue.get(0)
-            # Show result of the task if needed
-            #self.prog_bar.stop()
-            self.progressBar.stop()
-        except queue.Empty:
-            self.master.after(100, self.process_queue)
+    def update_progressbar(self, amount):
+        self.progressBar['value'] = amount
+        self.master.update_idletasks()
+
+    def end_progressbar(self):
+        self.enable_widgets()
+        self.progressBar.stop()
+        self.progressBar.grid_forget()
+
+    # def process_queue(self):
+    #     try:
+    #         msg = self.queue.get(0)
+    #         # Show result of the task if needed
+    #         print(msg)
+    #         self.progressBar.stop()
+    #     except queue.Empty:
+    #         self.master.after(100, self.process_queue)
 
     def process_run(self):
-        #self.progress()
-        #self.prog_bar.start()
-        self.progressBar.start()
-        self.queue = queue.Queue()
-        ThreadedTask(self.queue).start()
-        self.master.after(100, self.process_queue)
-
+        ok_to_run = False
         if self.__run_counter != 1:
             if tk.messagebox.askyesno("Confirm Run", "Are you sure you want to run again?"):
                 self.print_output(f'\n\n\n*****Starting Run #{self.__run_counter} *****\n')
                 self.__outfile_name = self.get_new_outfile_name()
-                self.process_835s()
-        else:
-            self.process_835s()
+                ok_to_run = True
+        else: ok_to_run = True
+        if ok_to_run:
+            if len(self.filePatternTxt.get()) > 0:
+                self.file_pattern = self.filePatternTxt.get()
+            if len(self.inFolderTxt.get()) == 0 or len(self.outFolderTxt.get()) == 0:
+                self.warn_missing_loc()
+            else:
+                self.begin_progressbar()
+                #self.queue = queue.Queue()
+                #ThreadedTask(self.queue).start()
+                threading.Thread(target=self.process_835s).start()
+                #self.master.after(100, self.process_queue)
 
 
     def parse_line(self, file, line):
@@ -207,21 +221,26 @@ class App(tk.Frame):
         if (line.startswith("CLP")):
             claim = re.sub('~','',line.split('*')[1])                # CLP;01
             clp02 = re.sub('~','',line.split('*')[2])                # CLP;02
-            self.write_to_csv(file
-                , file_trn02
-                , file_trn03
-                , file_payer
-                , file_payee
-                , file_npi
-                , claim
-                , clp02)
+            return [file, file_trn02, file_trn03, file_payer, file_payee, file_npi, claim, clp02]
+            # self.write_to_csv(file
+            #     , file_trn02
+            #     , file_trn03
+            #     , file_payer
+            #     , file_payee
+            #     , file_npi
+            #     , claim
+            #     , clp02)
 
     def parse_835(self, file_pattern):
         # Iterate through each '835' file in current directory and parse out desired values
         # Consider if file is split across lines (standard) or all in 1 line (uncommon)
         # Write desired values out as each CLP segment is found
+        #print("gets to parse_835")
+        file_count = sum(len(files) for _, _, files in os.walk(self.source_dir))
+        count = 0
         for root, dirs, files in os.walk(self.source_dir):
             for file in files:
+                count = count + 1
                 if file.endswith(file_pattern) or (file_pattern in file):
                     self.print_output(str(f'Reading file: {file}\n'))
                     num_lines_in_file = len(open(os.path.join(self.source_dir,file)).readlines())
@@ -229,47 +248,39 @@ class App(tk.Frame):
                         for line in open(os.path.join(self.source_dir,file),'r'):
                             one_line_data = line.split(sep="~")
                             for i in range(len(one_line_data)):
-                                self.parse_line(file, one_line_data[i])
+                                arg_list = self.parse_line(file, one_line_data[i])
+                                self.write_to_csv(*arg_list)
                     else:                           # Normal Multi-line 835 file
                         for line in open(os.path.join(self.source_dir,file),'r'):
-                            self.parse_line(file, line)
+                            arg_list = self.parse_line(file, line)
+                            self.write_to_csv(*arg_list)
+                    time.sleep(1)
+                self.update_progressbar(100 * (count / file_count))
+        self.end_progressbar()
 
     def process_835s(self):
-        if len(self.filePatternTxt.get()) > 0:
-            self.file_pattern = self.filePatternTxt.get()
-        self.disable_widgets()
-        if len(self.inFolderTxt.get()) == 0 or len(self.outFolderTxt.get()) == 0:
-            self.warn_missing_loc()
-        else:
-            # Write out Headers if output file is being newly created in current directory
-            with open(self.outfile_path, newline='', mode='a') as outcsv:
-                csv_writer = csv.writer(outcsv, delimiter=',', quotechar='"', quoting = csv.QUOTE_MINIMAL)
-                if not self.__file_exists: csv_writer.writerow(self.__OUTFILE_HEADERS)
+        #print("gets to process_835s")
+        # Write out Headers if output file is being newly created in current directory
+        with open(self.outfile_path, newline='', mode='a') as outcsv:
+            csv_writer = csv.writer(outcsv, delimiter=',', quotechar='"', quoting = csv.QUOTE_MINIMAL)
+            if not self.__file_exists: csv_writer.writerow(self.__OUTFILE_HEADERS)
 
-            self.print_output(str(f'Beginning processing...\n'))
-            self.print_output(str(f'Parsing with file pattern: {self.file_pattern}\n'))
-            self.parse_835(self.file_pattern)
-            self.print_output(str(f'Completed stripping 835s in: {self.source_dir}\n'))
-            self.print_output(str(f'Results saved to: {self.__outfile_name}'))
-            self.__run_counter += 1
-        self.enable_widgets()
+        self.print_output(str(f'Beginning processing...\n'))
+        self.print_output(str(f'Parsing with file pattern: {self.file_pattern}\n'))
+        self.parse_835(self.file_pattern)
+        self.print_output(str(f'Completed stripping 835s in: {self.source_dir}\n'))
+        self.print_output(str(f'Results saved to: {self.__outfile_name}'))
+        self.__run_counter += 1
 
-    # def refresh(self):
-    #     self.root.update()
-    #     self.root.after(1000,self.refresh)
-
-    # def start(self):
-    #     self.refresh()
-    #     threading.Thread(target=doingALotOfStuff).start()
-
-class ThreadedTask(threading.Thread):
-    def __init__(self, queue):
-        threading.Thread.__init__(self)
-        self.queue = queue
-    def run(self):
-        time.sleep(5)  # Simulate long running process
-        self.queue.put("Task finished")
-
+# class ThreadedTask(threading.Thread):
+#     def __init__(self, queue):
+#         threading.Thread.__init__(self)
+#         self.queue = queue
+#     def run(self):
+#         print("running thread")
+#         #self.process_835s()
+#         time.sleep(1)  # Simulate long running process
+#         self.queue.put("Task finished")
 
 if __name__ == "__main__":
     root = tk.Tk()
@@ -289,7 +300,7 @@ Helpful Sites along the way
    https://stackoverflow.com/questions/42422139/how-to-easily-avoid-tkinter-freezing
    Lot more in depth: https://pymotw.com/2/threading/
 
-   pysinstaller --onefile --windowed --icon/??? 835Parser.spec
+   pysinstaller --onefile --windowed --icon=835.ico 835Parser.spec
    else debug mode, onefolder, and no windowed
    for output and trace back if debug enabled:
     pyinstaller file.py 2> build.txt
