@@ -20,7 +20,7 @@ class App(tk.Frame):
     def __init__(self, master):
         self.master = master
         # self.master.resizable(width=False,height=False)
-        path = self.resource_path('835.ico')
+        path = self.resource_path('835_icon.ico')
         self.master.iconbitmap(path)
 
         self.outfile_path = ""

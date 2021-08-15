@@ -15,10 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Handle variable line length 835s. Consider using replace('\n','') on whole file content so it doesn't
   matter how many lines long the 835 is (including variable)
 - Handle I/O errors by accounting for exceptions. Currently not handling any
-- Update icon to free or unlicensed image. Unclear on limits of currently licensed one
 - Fix so user can choose to append to existing results file on subsequent runs. Currently appends but this
   is unintentional and a coincidence
 - Verify and add setting + logic for if subdirectories should be included in file scan
+- Implement a way to kill a thread without having to use a daemon thread and killing the app's process
 
 ## [3.1.0] - 2021-08-15
 ### Added
@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Made thread for processing 835 files a daemon thread so will stop when main app closes
 - Some variables were made private
+- Changed icon to one created by a free vector image
 
 ## [3.0.0] - 2021-08-14
 ### Added
@@ -56,7 +57,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 - Logic to refresh the app's fields and data should an unimplemented refresh button be clicked
 - Onefile executable version of program as it was out of date
-- Support for non-GUI version
 
 ### Fixed
 - Processing output's numerous extra new lines and first character missing
@@ -66,6 +66,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Initial Release
 - Program uses a GUI for input options
+
+### Deprecated
+- Non-Gui verison of program
 
 ## Explanation of Sections:
 - Added for new features.
