@@ -6,12 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-- Error: Strip newlines when processing a file to handle newline inconsistencies
+- Enh: Strip newlines when processing a file to handle newline inconsistencies
 - Arch: Incorporate using a Queue, potentially for processing thread worker's outputs
-- UX: Standalone executable. Prior one is outdated and removed
 - Error: Handle I/O, import and other errors because currently not handling any
 - Arch: Implement a way to kill a thread without using a daemon thread and killing the app's process
 - Arch: use after() method for updating progress bar
+
+## [3.2.1] - 2021-08-16 
+### Fixed
+- Issue 1: Spec file corrected filename from 835FilerParser to 835FileParser
+- Issue 2: Progress bar resets after a run
+- Issue 4: Readme updated with information on settings
+- Issue 5: Changelog window uses same icon as main app
+- Issue 6: Changelog content updated
 
 ## [3.2.0] - 2021-08-15
 ### Added

@@ -6,7 +6,7 @@ To run this program:
 The program will look for any files containing or ending with the indicated pattern.
 
 The following info is parsed:
-- TRN02, TRN03, N1*PR02, N1PE02, N1PE;04, CLP01, CLP02, PLB
+- TRN02, TRN03, N1*PR02, N1*PE02, N1*PE04, CLP01, CLP02, PLB
 
 In the settings menu one can toggle whether:
 - Subsequent runs should append to the initial run's results file or not

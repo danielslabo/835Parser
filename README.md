@@ -24,6 +24,20 @@ For stand alone usage on Windows, download and unzip the 835FileParser.zip file 
 
 For stand alone usage on Windows, download and unzip the 835FileParser.zip file and run as desired.
 
+To Run:
+
+1. Specify the Open location containing files to parse
+2. Specify the desired results file output location
+3. Optionally, change the default ".835" file pattern to a desired file pattern
+    - Files will qualify for parsing if they contain or end with the indicated file pattern
+
+From the Settings menu:
+
+- Toggle whether subsequent program runs append the results to the initial run's results.
+- Toggle whether the program should search in subdirectories of the specified open location, for files matching the file pattern
+
+[My Image] (danielslabo.github.com/835FileParser/img/screenshot1.jpg)
+
 ### Strip835GUI.py
 
 Run as a direct python program via shell. Offers a GUI for a user to specify the source directory and also the output dircetory. Allows a user to specify the file pattern to use as well. Uses associated ico and png files.
@@ -41,5 +55,6 @@ Please make sure to update tests as appropriate.
 
 ## License
 
-[APACHE 2.0](https://choosealicense.com/licenses/apache-2.0/)
+### [APACHE 2.0](https://choosealicense.com/licenses/apache-2.0/)
+
 =======

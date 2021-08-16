@@ -21,11 +21,14 @@ class App(tk.Frame):
     __OUTFILE_HEADERS = ['FILENAME', 'TRN02', 'TRN03', 'PAYER', 'PAYEE', 'NPI',
                          'CLAIM', 'CLP02', 'PLB_DATA']
     __DEFAULT_FILE_PATTERN = ".835"
+    __HELPFILE = 'help.txt'
+    __CHANGELOG = 'changelog.txt'
+    __ICONFILE = '835_icon.ico'
 
     def __init__(self, master):
         self.master = master
-        path = self.resource_path('835_icon.ico')
-        self.master.iconbitmap(path)
+        self.icon_path = self.resource_path(self.__ICONFILE)
+        self.master.iconbitmap(self.icon_path)
         self.__outfile_path = ""
         self.__source_dir = ""
         self.__file_pattern = ""
@@ -154,12 +157,13 @@ class App(tk.Frame):
 
     def open_changelog(self):
         try:
-            with open(self.resource_path('changelog.txt'), 
+            with open(self.resource_path(self.__CHANGELOG), 
                       mode='r') as changelogfile:
                 msg = changelogfile.read()
             newWindow = tk.Toplevel(self.master)
             newWindow.title('Change Log')
             newWindow.resizable(width=False, height=False)
+            newWindow.iconbitmap(self.icon_path)
 
             changelogFrame = tk.Frame(newWindow)
             changelogFrame.pack()
@@ -183,7 +187,7 @@ class App(tk.Frame):
 
     def open_help(self):
         try:
-            with open(self.resource_path('help.txt'), mode='r') as helpfile:
+            with open(self.resource_path(self.__HELPFILE), mode='r') as helpfile:
                 msg = helpfile.read()
             tk.messagebox.showinfo('Help', message=msg, icon='question')
         except IOError:
@@ -210,7 +214,7 @@ class App(tk.Frame):
             # initialdir=expanduser(pathvar.get()),
             title="Browse for where to save output results..."))
         self.outFolderTxt.configure(state='normal')
-        self.outFolderTxt.delete(0,tk.END)
+        self.outFolderTxt.delete(0, tk.END)
         self.outFolderTxt.insert(0, str(save_loc))
         self.outFolderTxt.configure(state='disabled')
         self.update_outfile_path(save_loc, self.__outfile_name)
@@ -276,6 +280,7 @@ class App(tk.Frame):
         self.master.update_idletasks()
 
     def end_progressbar(self):
+        self.update_progressbar(int(0))
         self.enable_widgets()
         self.progressBar.grid_forget()
 
