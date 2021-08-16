@@ -16,7 +16,7 @@ Rows of data contain the following columns:
 
 ## Installation
 
-For stand alone usage on Windows, download and unzip the 835FileParser.zip file and run as desired. Otherwise within a python installation run Strip835FUI.py.
+For stand alone usage on Windows, download and unzip the 835FileParser.zip file and run as desired. Otherwise within a python installation run Strip835UI.py.
 
 ## Usage
 
