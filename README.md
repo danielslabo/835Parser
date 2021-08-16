@@ -36,7 +36,7 @@ From the Settings menu:
 - Toggle whether subsequent program runs append the results to the initial run's results.
 - Toggle whether the program should search in subdirectories of the specified open location, for files matching the file pattern
 
-[My Image] (danielslabo.github.com/835FileParser/img/screenshot1.jpg)
+![screenshot1] (https://github.com/danielslabo/835Parser/blob/main/img/screenshot1.jpg)
 
 ### Strip835GUI.py
 
