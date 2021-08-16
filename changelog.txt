@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Arch: Implement a way to kill a thread without using a daemon thread and killing the app's process
 - Arch: use after() method for updating progress bar
 
-## [3.2.1] - 2021-08-16 
+## [3.2.1] - 2021-08-16
 ### Fixed
 - Issue 1: Spec file corrected filename from 835FilerParser to 835FileParser
 - Issue 2: Progress bar resets after a run

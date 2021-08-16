@@ -10,11 +10,6 @@ from tkinter.filedialog import askdirectory
 from tkinter.messagebox import showerror, askyesno
 from tkinter.font import Font
 
-'''
-Program parses an 835 file.
-    Assumptions: end of line delimiter is '~', segment delimiter is '*'
-'''
-
 
 class App(tk.Frame):
     __OUTFILE_PREFIX = "Parsed835Results"
@@ -440,6 +435,6 @@ Unreleased Items Notes
 
     import queue as queue
     pyinstaller --onefile --windowed --icon=835_icon.ico --version-file=version.txt Strip835GUI.spec
-    pyinstaller -F -w -- clean --exclude-module=pyinstaller Strip835GUI.spec
+    pyinstaller -F -w --clean --exclude-module=pyinstaller Strip835GUI.spec
     for output and trace back if debug enabled: pyinstaller file.py 2> build.txt
 """
