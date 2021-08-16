@@ -4,6 +4,7 @@ Parsed835*
 *.835
 *.835*
 Sample_Files/
+Sample/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
