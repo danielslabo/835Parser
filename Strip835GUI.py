@@ -1,59 +1,74 @@
-import os, csv, re, time, sys
+import os
+import csv
+import sys
+import re
 import threading
+import time
 import tkinter as tk
+from tkinter import scrolledtext, ttk, messagebox
 from tkinter.filedialog import askdirectory
 from tkinter.messagebox import showerror, askyesno
 from tkinter.font import Font
-from tkinter import scrolledtext, ttk, messagebox
-# import queue as queue # TODO
+
 '''
 Program parses an 835 file.
     Assumptions: end of line delimiter is '~', segment delimiter is '*'
 '''
 
 class App(tk.Frame):
-    __OUTFILE_PREFIX = "Parsed835Goodies"
+    __OUTFILE_PREFIX = "Parsed835Results"
     __OUTFILE_HEADERS = ['FILENAME', 'TRN02', 'TRN03', 'PAYER', 'PAYEE', 'NPI',
                          'CLAIM', 'CLP02', 'PLB_DATA']
     __DEFAULT_FILE_PATTERN = ".835"
 
     def __init__(self, master):
         self.master = master
-        # self.master.resizable(width=False,height=False)
         path = self.resource_path('835_icon.ico')
         self.master.iconbitmap(path)
-
-        self.outfile_path = ""
-        self.source_dir = ""
+        self.__outfile_path = ""
+        self.__source_dir = ""
         self.__file_pattern = ""
         self.__append_runs = tk.BooleanVar()
-        self.__append_runs.set(1)
+        self.__append_runs.set(True)
+        self.__traverse_subdir = tk.BooleanVar()
+        self.__traverse_subdir.set(False)
         self.__run_counter = 1
         self.__outfile_name = self.get_new_outfile_name()
-        self.__file_exists = os.path.isfile(self.__outfile_name)
+        self.__file_exists = self.check_outfile_exists(self.__outfile_name)
 
+        self.init_widgets_menu()
+        self.init_widgets_other()
+
+    def init_widgets_menu(self):
         # Menu Bar
         menubar = tk.Menu(self.master)
         self.master.config(menu=menubar)
 
-        # Menu Bar - File
-        filemenu = tk.Menu(menubar, tearoff=0)
-        filemenu.add_command(label="Open", command=self.browse_for_open_loc)
-        filemenu.add_command(label="Save", command=self.browse_for_save_loc)
-        filemenu.add_separator()
-        filemenu.add_command(label="Exit", command=self.quit)
-        menubar.add_cascade(label='File', menu=filemenu)
-        # Menu Bar - Settings
-        settingsmenu = tk.Menu(menubar, tearoff=0)
-        settingsmenu.add_checkbutton(
-            label="Append subsequent runs", onvalue=1, offvalue=0, variable=self.__append_runs)
-        menubar.add_cascade(label='Settings', menu=settingsmenu)
-        # Mennu Bar - Help
+        # File
+        self.filemenu = tk.Menu(menubar, tearoff=0)
+        self.filemenu.add_command(label="Open", command=self.browse_for_open_loc)
+        self.filemenu.add_command(label="Save", command=self.browse_for_save_loc)
+        self.filemenu.add_separator()
+        self.filemenu.add_command(label="Exit", command=self.quit)
+        menubar.add_cascade(label='File', menu=self.filemenu)
+
+        # Settings
+        self.settingsmenu = tk.Menu(menubar, tearoff=0)
+        self.settingsmenu.add_checkbutton(
+            label="Append subsequent runs", onvalue=1, offvalue=0, 
+            variable=self.__append_runs, command=None)
+        self.settingsmenu.add_checkbutton(
+            label="Search in subdirectories", onvalue=1, offvalue=0, 
+            variable=self.__traverse_subdir, command=None)
+        menubar.add_cascade(label='Settings', menu=self.settingsmenu)
+
+        # Help
         helpmenu = tk.Menu(menubar, tearoff=0)
-        helpmenu.add_command(label="Help", command=self.help)
-        helpmenu.add_command(label="Change Log", command=self.changelog)
+        helpmenu.add_command(label="Help", command=self.open_help)
+        helpmenu.add_command(label="Change Log", command=self.open_changelog)
         menubar.add_cascade(label="Help", menu=helpmenu)
 
+    def init_widgets_other(self):
         # Frame Setup
         inputsFrame = tk.LabelFrame(root, text="1. Enter File Details: ")
         inputsFrame.grid(row=0, columnspan=10, sticky='WE', padx=5, pady=5, ipadx=5, ipady=5)
@@ -121,7 +136,7 @@ class App(tk.Frame):
         closeBtn = tk.Button(footerFrame, text="Close", command=self.quit)
         closeBtn.grid(row=2, column=3, sticky='SE', padx=5, pady=2, ipadx=20)
 
-    def changelog(self):
+    def open_changelog(self):
         try:
             with open(self.resource_path('changelog.txt'),mode='r') as changelogfile:
                 msg = changelogfile.read()
@@ -144,7 +159,7 @@ class App(tk.Frame):
             xscrollbar.grid(row=1, column=0, sticky='EW')
         except: pass
 
-    def help(self):
+    def open_help(self):
         try:
             with open(self.resource_path('help.txt'),mode='r') as helpfile:
                 msg = helpfile.read()
@@ -154,13 +169,16 @@ class App(tk.Frame):
     def quit(self):
         root.destroy()
 
+    def update_outfile_path(self, save_loc, filename):
+        self.__outfile_path = os.path.join(save_loc, filename)
+
     def browse_for_open_loc(self):
         open_loc = os.path.normpath(askdirectory(title="Browse for Folder containing 835s to parse..."))
         self.inFolderTxt.configure(state='normal')
         self.inFolderTxt.delete(0,tk.END)
         self.inFolderTxt.insert(0, str(open_loc))
         self.inFolderTxt.configure(state='disabled')
-        self.source_dir = os.path.normpath(open_loc)
+        self.__source_dir = os.path.normpath(open_loc)
     
     def browse_for_save_loc(self):
         save_loc = os.path.normpath(askdirectory(
@@ -170,10 +188,10 @@ class App(tk.Frame):
         self.outFolderTxt.delete(0,tk.END)
         self.outFolderTxt.insert(0, str(save_loc))
         self.outFolderTxt.configure(state='disabled')
-        self.outfile_path = os.path.join(save_loc,self.__outfile_name)
+        self.update_outfile_path(save_loc, self.__outfile_name)
 
     def write_to_csv(self, *args):
-        with open(self.outfile_path, newline='', mode='a') as outcsv:
+        with open(self.__outfile_path, newline='', mode='a') as outcsv:
             csv_writer = csv.writer(outcsv, delimiter=',', quotechar='"', quoting = csv.QUOTE_MINIMAL)
             data= []
             for x in args:
@@ -199,13 +217,24 @@ class App(tk.Frame):
         self.okBtn.configure(state='disabled')
         self.inFolderBtn.configure(state='disabled')
         self.outFolderBtn.configure(state='disabled')
-        self.filePatternTxt.configure(state = 'disabled')
+        self.filePatternTxt.configure(state ='disabled')
+        self.filemenu.entryconfigure(0, state='disabled')
+        self.filemenu.entryconfigure(1, state='disabled')
+        self.settingsmenu.entryconfigure(0, state='disabled')
+        self.settingsmenu.entryconfigure(1, state='disabled')
 
     def enable_widgets(self):
         self.okBtn.configure(state='normal')
         self.inFolderBtn.configure(state='normal')
         self.outFolderBtn.configure(state='normal')
         self.filePatternTxt.configure(state = 'normal')
+        self.filemenu.entryconfigure(0, state='normal')
+        self.filemenu.entryconfigure(1, state='normal')
+        self.settingsmenu.entryconfigure(0, state='normal')
+        self.settingsmenu.entryconfigure(1, state='normal')
+
+    def check_outfile_exists(self, outfile_name):
+        return os.path.isfile(self.__outfile_name)
 
     def get_new_outfile_name(self):
         return self.__OUTFILE_PREFIX + " " + time.strftime("%Y-%m-%d-%H%M%S") + ".csv"
@@ -213,7 +242,7 @@ class App(tk.Frame):
     def begin_progressbar(self):
         self.disable_widgets()
         self.progressBar.grid(row=2, column=1, stick='EW')
-        self.progressBar.start()
+        #self.progressBar.start()
 
     def update_progressbar(self, amount):
         self.progressBar['value'] = amount
@@ -221,7 +250,7 @@ class App(tk.Frame):
 
     def end_progressbar(self):
         self.enable_widgets()
-        self.progressBar.stop()
+        #self.progressBar.stop()
         self.progressBar.grid_forget()
 
     def process_queue(self): # Unused
@@ -234,6 +263,14 @@ class App(tk.Frame):
         #     self.progressBar.stop()
         # except queue.Empty:
         #     self.master.after(100, self.process_queue)
+
+    def get_files_list(self, source_dir):
+        if self.__traverse_subdir.get():
+            files = [os.path.join(root,f) for root,dirs,files in os.walk(source_dir) for f in files]
+            ##files = [f for root,dirs,files in os.walk(source_dir) for f in files]
+        else:
+            files = [f for f in os.listdir(source_dir) if os.path.isfile(os.path.join(source_dir, f))]
+        return files
 
     def parse_835(self, full_file_path, filename):
         # Consider if file is split across lines (standard) or all in 1 line (uncommon)
@@ -271,30 +308,33 @@ class App(tk.Frame):
                     self.write_to_csv(*parsed_line)
 
     def process_835s(self, file_pattern, source_dir):
-        # Iterate through each '835' files in current directory and parse out desired values
-        total_file_count = sum(len(files) for _, _, files in os.walk(source_dir))
+        # Iterate through each '835' files in current directory and parse out desired values  
+        files = self.get_files_list(source_dir)
+        #total_file_count = sum(len(files) for _, _, files in os.walk(source_dir))
+        total_file_count = len(files)
         processed_file_count = 0
-        for root, dirs, files in os.walk(source_dir):
-            for file in files:
-                processed_file_count += 1
-                if file.endswith(file_pattern) or (file_pattern in file):
-                    self.print_output(str(f'Reading file: {file}\n'))
-                    full_file_path = os.path.join(source_dir,file)
-                    self.parse_835(full_file_path, file)
-                self.update_progressbar(int(100 * (processed_file_count / total_file_count)))
+        files = self.get_files_list(source_dir)
+        for file in files:
+            processed_file_count += 1
+            if file.endswith(file_pattern) or (file_pattern in file):
+                self.print_output(str(f'Reading file: {file}\n'))
+                full_file_path = os.path.abspath(os.path.join(source_dir,file))
+                self.parse_835(full_file_path, file)
+            progress = int(100 * (processed_file_count / total_file_count))
+            if self.progressBar['value'] < progress: self.update_progressbar(progress)
         self.end_progressbar()
 
     def begin_processing(self):
         # Write out Headers if output file is being newly created in current directory
-        with open(self.outfile_path, newline='', mode='a') as outcsv:
+        with open(self.__outfile_path, newline='', mode='a') as outcsv:
             csv_writer = csv.writer(outcsv, delimiter=',', quotechar='"', quoting = csv.QUOTE_MINIMAL)
             if not self.__file_exists: csv_writer.writerow(self.__OUTFILE_HEADERS)
 
         self.print_output(str(f'Beginning processing...\n'))
         self.print_output(str(f'Parsing with file pattern: {self.__file_pattern}\n'))
-        self.process_835s(self.__file_pattern, self.source_dir)
-        self.print_output(str(f'Completed stripping 835s in: {self.source_dir}\n'))
-        self.print_output(str(f'Results saved to: {self.__outfile_name}'))
+        self.process_835s(self.__file_pattern, self.__source_dir)
+        self.print_output(str(f'Completed stripping 835s in: {self.__source_dir}\n'))
+        self.print_output(str(f'Results saved to: {self.__outfile_path}'))
         self.__run_counter += 1
 
     def setup_processing(self):
@@ -306,9 +346,12 @@ class App(tk.Frame):
             ok_to_run = False
             if self.__run_counter != 1:
                 if tk.messagebox.askyesno("Confirm Run", "Are you sure you want to run again?"):
-                    self.print_output(f'\n\n\n*****Starting Run #{self.__run_counter} *****\n')
-                    self.__outfile_name = self.get_new_outfile_name()
+                    if not self.__append_runs.get():
+                        self.__outfile_name = self.get_new_outfile_name()
+                        self.__file_exists = self.check_outfile_exists(self.__outfile_name)
+                        self.update_outfile_path(self.outFolderTxt.get(), self.__outfile_name)
                     ok_to_run = True
+                    self.print_output(f'\n\n\n*****Starting Run #{self.__run_counter} *****\n')
             else: ok_to_run = True
             if ok_to_run:
                 self.begin_progressbar()
@@ -332,7 +375,6 @@ class ThreadedTask(threading.Thread): # Unused
 if __name__ == "__main__":
     root = tk.Tk()
     root.wm_title('835 File Parser')
-    #root.iconphoto(False, tk.PhotoImage(file='./835.png'))
     root.minsize(450,265)
     root.columnconfigure(2, weight=1)
     root.rowconfigure(1, weight=1)
@@ -340,12 +382,16 @@ if __name__ == "__main__":
     root.mainloop()
 
 """
-Notes for pyinstaller
-   pysinstaller --onefile --windowed --icon=835.ico 835Parser.spec
-   else debug mode, onefolder, and no windowed
-   for output and trace back if debug enabled:
-    pyinstaller file.py 2> build.txt
+Unreleased Items Notes
+    https://stackoverflow.com/questions/25753632/tkinter-how-to-use-after-method
+    https://stackoverflow.com/questions/36516497/how-to-update-a-progress-bar-in-a-loop
+    https://stackoverflow.com/questions/13318742/python-logging-to-tkinter-text-widget
+    https://beenje.github.io/blog/posts/logging-to-a-tkinter-scrolledtext-widget/
+    https://stackoverflow.com/questions/6893968/how-to-get-the-return-value-from-a-thread-in-python
+    https://stackoverflow.com/questions/39061265/how-to-get-a-working-progress-bar-in-python-using-multi-process-or-multi-threade
 
-Log Queue Handler
-https://beenje.github.io/blog/posts/logging-to-a-tkinter-scrolledtext-widget/
+    import queue as queue
+    pyinstaller --onefile --windowed --icon=835_icon.ico --version-file=version.txt Strip835GUI.spec
+    pyinstaller -F -w -- clean --exclude-module=pyinstaller Strip835GUI.spec
+    for output and trace back if debug enabled: pyinstaller file.py 2> build.txt
 """

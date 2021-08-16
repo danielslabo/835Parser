@@ -5,8 +5,11 @@ To run this program:
 
 The program will look for any files containing or ending with the indicated pattern.
 
-In the settings menu one can toggle whether subsequent runs should append to the initial run's results file or not.
+The following info is parsed:
+- TRN02, TRN03, N1*PR02, N1PE02, N1PE;04, CLP01, CLP02, PLB
+
+In the settings menu one can toggle whether:
+- Subsequent runs should append to the initial run's results file or not
+- Should sub directories be searched for matching files in the open location specified
 
 For issues with the program or results, feature requests, or questions, please reach out directly or open an issue on github: https://github.com/danielslabo/835Parser
-
-Current version: 3.1.0

@@ -6,44 +6,62 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-- Format an 835 file to have no new lines to better handle variable lines. Would then asseumes delimiter is '~'
-- Incorporate using a Queue, potentially for processing thread worker's outputs
-- Fix progress bar's slight back ticks, should only smoothly move forward
-- Cleanup variable names, variable scoping, and add proper class and function comments
-- Create Standalone executable. Prior one is outdated and removed
-- Fix so that '00000' value when opened in excel doesn't become '0'; surround with quotes?
-- Handle variable line length 835s. Consider using replace('\n','') on whole file content so it doesn't
-  matter how many lines long the 835 is (including variable)
-- Handle I/O errors by accounting for exceptions. Currently not handling any
-- Fix so user can choose to append to existing results file on subsequent runs. Currently appends but this
-  is unintentional and a coincidence
-- Verify and add setting + logic for if subdirectories should be included in file scan
-- Implement a way to kill a thread without having to use a daemon thread and killing the app's process
+- Error: Strip newlines when processing a file to handle newline inconsistencies
+- Arch: Incorporate using a Queue, potentially for processing thread worker's outputs
+- UX: Standalone executable. Prior one is outdated and removed
+- Error: Handle I/O, import and other errors because currently not handling any
+- Arch: Implement a way to kill a thread without using a daemon thread and killing the app's process
+- Arch: use after() method for updating progress bar
+
+## [3.2.0] - 2021-08-15
+### Added
+- Exe version of program
+
+## [3.1.1] - 2021-08-15
+### Added
+- Setting to enable searching subdirectories in specified open location
+
+### Changed
+- Results file prefix changed to Parsed835Results
+- Decomposed widget initializations into separate functions
+- Output shows full file path for results and not just filename
+- Additional init variables made private
+- File menu and Settings Menu are now scoped as class variables
+- Help text indicates shorthand for which fields are parsed
+- Progress bar no longer is started and stopped for step intervals to avoid looping progress when running long.
+
+### Fixed
+- When program searches subdirectories, it will find the reltive path to files in subdirectories
+- When program runs more than once, the results file is actually created. This was a problem with
+  the outfile name and path previously not being updated.
+- Menu options for File>Open, File>Save, and the Settings menu items now disable while program is running.
+- Append results settings option now works
 
 ## [3.1.0] - 2021-08-15
 ### Added
 - Menu bar added with submenus of File, Settings, and Help
+- Settings option added to toggle appending subsequent runs' results to initial file
 - Help menu opens Help, and Changelog files
 
 ### Changed
-- Made thread for processing 835 files a daemon thread so will stop when main app closes
-- Some variables were made private
-- Changed icon to one created by a free vector image
+- Made thread for processing 835 files a daemon thread so will stop when main app closes.
+- Some variables were made private.
+- Changed icon to one created by a free vector image.
 
 ## [3.0.0] - 2021-08-14
 ### Added
 - Thread processing so GUI doesn't freeze while running
-- Progress bar
+- Progress bar implemented
 
 ### Changed
-- Decomposed parsing 835s into several methods
-- Fixed typos and reworded comments
+- Decomposed parsing 835s into several methods.
+- Fixed typos and reworded comments.
 
 ### Removed
-- Comment section on pyinstaller steps
+- Comment section on pyinstaller steps.
 
 ### Fixed
-- Program can run more than once without having to re-open
+- Program can run more than once without having to re-open.
 
 ## [2.0.0] - YYYY-MM-DD
 ### Added
@@ -53,6 +71,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Can handle 835s where all data is in one line of the file
 - Output message box is no longer editable
+- CSV writer uses a QUOTE_MINIMAL setting
 
 ### Removed
 - Logic to refresh the app's fields and data should an unimplemented refresh button be clicked

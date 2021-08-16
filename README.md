@@ -12,15 +12,6 @@ Rows of data contain the following columns:
 - CLP02
 - PLB_DATA (the whole PLB segment's data)
 
-## Current Version [3.0.0] - 2021-08-14
-### Added
-- Thread processing so GUI doesn't freeze while running
-- Progress bar
-
-### Changed
-- Decomposed parsing 835s into several methods
-- Fixed typos and reworded comments
-
 ## Installation
 TODO
 
