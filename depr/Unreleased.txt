@@ -1,0 +1,14 @@
+"""
+Unreleased Items Notes
+    https://stackoverflow.com/questions/25753632/tkinter-how-to-use-after-method
+    https://stackoverflow.com/questions/36516497/how-to-update-a-progress-bar-in-a-loop
+    https://stackoverflow.com/questions/13318742/python-logging-to-tkinter-text-widget
+    https://beenje.github.io/blog/posts/logging-to-a-tkinter-scrolledtext-widget/
+    https://stackoverflow.com/questions/6893968/how-to-get-the-return-value-from-a-thread-in-python
+    https://stackoverflow.com/questions/39061265/how-to-get-a-working-progress-bar-in-python-using-multi-process-or-multi-threade
+
+    import queue as queue
+    pyinstaller --onefile --windowed --icon=835_icon.ico --version-file=version.txt Strip835GUI.spec
+    pyinstaller -F -w --clean --exclude-module=pyinstaller Strip835GUI.spec
+    for output and trace back if debug enabled: pyinstaller file.py 2> build.txt
+"""

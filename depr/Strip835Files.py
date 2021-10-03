@@ -1,3 +1,4 @@
+# Note this non-GUI version is deprecated
 import csv
 import os
 import re
@@ -43,15 +44,15 @@ for root, dirs, files in os.walk(source_dir):
                 for line in open(file, 'r'):
                     one_line_data = line.split(sep="~")
                     for i in range(len(one_line_data)):
-                        if (one_line_data[i].startswith("TRN")):
+                        if one_line_data[i].startswith("TRN"):
                             file_trn02 = re.sub('~', '', one_line_data[i].split('*')[2])           # TRN;02
                             file_trn03 = re.sub('~', '', one_line_data[i].split('*')[3])           # TRN;03
-                        if (one_line_data[i].startswith("N1*PR")):
+                        if one_line_data[i].startswith("N1*PR"):
                             file_payer = re.sub('~', '', one_line_data[i].split('*')[2]).rstrip()  # N1;02
-                        if (one_line_data[i].startswith("N1*PE")):
+                        if one_line_data[i].startswith("N1*PE"):
                             file_payee = re.sub('~', '', one_line_data[i].split('*')[2]).rstrip()  # N1;02
                             file_npi = re.sub('~', '', one_line_data[i].split('*')[4])             # N1;04
-                        if (one_line_data[i].startswith("CLP")):
+                        if one_line_data[i].startswith("CLP"):
                             claim = re.sub('~', '', one_line_data[i].split('*')[1])                # CLP;01
                             clp02 = re.sub('~', '', one_line_data[i].split('*')[2])                # CLP;02
                             write_to_csv(
@@ -59,15 +60,15 @@ for root, dirs, files in os.walk(source_dir):
                                 file_payee, file_npi, claim, clp02)
             else:
                 for line in open(file, 'r'):
-                    if (line.startswith("TRN")):
+                    if line.startswith("TRN"):
                         file_trn02 = re.sub('~', '', line.split('*')[2])           # TRN;02
                         file_trn03 = re.sub('~', '', line.split('*')[3])           # TRN;03
-                    if (line.startswith("N1*PR")):
+                    if line.startswith("N1*PR"):
                         file_payer = re.sub('~', '', line.split('*')[2]).rstrip()  # N1;02
-                    if (line.startswith("N1*PE")):
+                    if line.startswith("N1*PE"):
                         file_payee = re.sub('~', '', line.split('*')[2]).rstrip()  # N1;02
                         file_npi = re.sub('~', '', line.split('*')[4])             # N1;04
-                    if (line.startswith("CLP")):
+                    if line.startswith("CLP"):
                         claim = re.sub('~', '', line.split('*')[1])                # CLP;01
                         clp02 = re.sub('~', '', line.split('*')[2])                # CLP;02
                         write_to_csv(

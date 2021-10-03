@@ -11,6 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Error: Handle I/O, import and other errors because currently not handling any
 - Arch: Implement a way to kill a thread without using a daemon thread and killing the app's process
 - Arch: use after() method for updating progress bar
+- Enh: Account for changes to TRN and N1* segments if more than one in a file. Unconfirmed if necessary
+
+## [3.2.2] - 2021-10-02
+### Fixed
+- Made various small fixes per pep8 style guide
+
+### Added
+- Function comments using docstrings
 
 ## [3.2.1] - 2021-08-16
 ### Fixed
@@ -94,7 +102,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Program uses a GUI for input options
 
 ### Deprecated
-- Non-Gui verison of program
+- Non-Gui version of program
 
 ## Explanation of Sections:
 - Added for new features.
