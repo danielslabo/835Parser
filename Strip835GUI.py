@@ -5,15 +5,18 @@ import re
 import threading
 import time
 import tkinter as tk
-from tkinter import scrolledtext, ttk, messagebox
+from tkinter import scrolledtext, ttk, messagebox, END
 from tkinter.filedialog import askdirectory
 
 
 class App(tk.Frame):
-    __OUTFILE_PREFIX = "Parsed835Results"
+    __OUTFILE_PREFIX = "ParsedFileResults"
     __OUTFILE_HEADERS = ['FILENAME', 'TRN02', 'TRN03', 'PAYER', 'PAYEE', 'NPI',
                          'CLAIM', 'CLP02', 'PLB_DATA']
+    __OUTFILE_HEADERS_271 = ['FILENAME', 'LASTNAME', 'FIRSTNAME', 'MIDINITIAL',
+                             'SUBSCRIBERID', 'INSTYPECODE']
     __DEFAULT_FILE_PATTERN = ".835"
+    __DEFAULT_PARSE_MODE = "835"
     __HELPFILE = 'help.txt'
     __CHANGELOG = 'changelog.txt'
     __ICONFILE = '835_icon.ico'
@@ -30,9 +33,13 @@ class App(tk.Frame):
         self.__append_runs.set(True)
         self.__traverse_subdir = tk.BooleanVar()
         self.__traverse_subdir.set(False)
+        self.__parse_271 = tk.BooleanVar()
+        self.__parse_271.set(False)
         self.__run_counter = 1
         self.__outfile_name = self.get_new_outfile_name()
         self.__file_exists = self.check_outfile_exists(self.__outfile_name)
+        self.__parse_mode = self.__DEFAULT_PARSE_MODE
+        self.__headers = self.__OUTFILE_HEADERS
 
         self.__init_widgets_menu()
         self.__init_widgets_other()
@@ -61,6 +68,9 @@ class App(tk.Frame):
         self.settings_menu.add_checkbutton(
             label="Search in subdirectories", onvalue=1, offvalue=0,
             variable=self.__traverse_subdir, command=None)
+        self.settings_menu.add_checkbutton(
+            label="Use for 271 parsing", onvalue=1, offvalue=0,
+            variable=self.__parse_271, command=self.update_widgets_271_toggle)
         menu_bar.add_cascade(label='Settings', menu=self.settings_menu)
 
         # Help
@@ -103,9 +113,8 @@ class App(tk.Frame):
         self.file_pattern_txt.insert(0, str(self.__DEFAULT_FILE_PATTERN))
 
         # Source Directory Prompt
-        in_folder_lbl = tk.Label(inputs_frame, text="Folder with 835s:",
-                                 anchor='w')
-        in_folder_lbl.grid(row=1, column=0, sticky='WE', padx=5, pady=2)
+        self.in_folder_lbl = tk.Label(inputs_frame, text="Folder with 835s:", anchor='w')
+        self.in_folder_lbl.grid(row=1, column=0, sticky='WE', padx=5, pady=2)
 
         self.in_folder_txt = tk.Entry(inputs_frame, state="disabled")
         self.in_folder_txt.grid(row=1, column=1, columnspan=7,
@@ -150,6 +159,25 @@ class App(tk.Frame):
 
         close_btn = tk.Button(footer_frame, text="Close", command=self.quit)
         close_btn.grid(row=2, column=3, sticky='SE', padx=5, pady=2, ipadx=20)
+
+    def update_widgets_271_toggle(self):
+        if self.__parse_271.get():
+            self.__parse_mode = "271"
+            self.__file_pattern = ".txt"
+            self.in_folder_lbl.config(text = "Folder with 271s:")
+            self.file_pattern_txt.delete(0,END)
+            self.file_pattern_txt.insert(0, str(self.__file_pattern))
+            self.__headers = self.__OUTFILE_HEADERS_271
+        else:
+            self.__parse_mode = "835"
+            self.__file_pattern = self.__DEFAULT_FILE_PATTERN
+            self.in_folder_lbl.config(text = "Folder with 835s:")
+            self.file_pattern_txt.delete(0,END)
+            self.file_pattern_txt.insert(0, str(self.__file_pattern))
+            self.__headers = self.__OUTFILE_HEADERS
+
+
+
 
     def open_changelog(self):
         """Opens changelog file for user in new window."""
@@ -202,7 +230,7 @@ class App(tk.Frame):
 
     def browse_for_open_loc(self):
         """Opens window for user to navigate and select input folder location."""
-        msg = "Browse for Folder containing 835s to parse..."
+        msg = "Browse for Folder containing {ext}s to parse...".format(ext = self.__parse_mode)
         open_loc = os.path.normpath(askdirectory(title=msg))
         self.in_folder_txt.configure(state='normal')
         self.in_folder_txt.delete(0, tk.END)
@@ -326,6 +354,34 @@ class App(tk.Frame):
                      if os.path.isfile(os.path.join(source_dir, f))]
         return files
 
+    def parse_271(self, full_file_path, filename):
+        """TODO Document parse_271 function."""
+        with open(full_file_path, 'r') as file:
+            file_data = file.readlines()
+            num_lines_in_file = len(file_data)
+            if num_lines_in_file == 1:
+                file_content = file_data[0].split(sep="\n")
+            else:
+                file_content = file_data
+            for line in file_content:
+                lname, fname, midin, subid, instype = "", "", "", "", ""
+                idxA1 = ("EB", line.find("EB*R**30*"))
+                idxB1 = ("SUB", line.find("NM1*IL*1*"))
+                indexes = sorted([idxA1, idxB1])
+                for start_index in indexes:
+                    idx_white_space = line[start_index[1]:].find(" ")
+                    data = line[start_index[1]:start_index[1] + idx_white_space]
+                    if start_index[0] == "SUB":
+                        lname = data.split('*')[3]
+                        fname = data.split('*')[4]
+                        midin = data.split('*')[7]
+                        subid = data.split('*')[9]
+                    elif start_index[0] == "EB":
+                        instype = data.split('*')[4]
+                parsed_line = [filename, lname, fname, midin, subid, instype]
+                # print(parsed_line)
+                self.write_to_csv(*parsed_line)
+
     def parse_835(self, full_file_path, filename):
         """
         Consider if filename in specified full_file_path  is split across
@@ -367,7 +423,7 @@ class App(tk.Frame):
                                    clp02, plb]
                     self.write_to_csv(*parsed_line)
 
-    def process_835s(self, file_pattern, source_dir):
+    def process_files(self, file_pattern, source_dir):
         """
         Get number of files in specified source_dir and iterate through each file of
         specified file_pattern in source_dir and call function to parse the file. Increment
@@ -382,7 +438,11 @@ class App(tk.Frame):
             if file.endswith(file_pattern) or (file_pattern in file):
                 self.print_output(f'Reading file: {file}\n')
                 full_file_path = os.path.abspath(os.path.join(source_dir, file))
-                self.parse_835(full_file_path, file)
+                # Check what we're parsing
+                if self.__parse_271.get():
+                    self.parse_271(full_file_path, file)
+                else:
+                    self.parse_835(full_file_path, file)
             progress = int(100 * (processed_file_count / total_file_count))
             if self.progress_bar['value'] < progress:
                 self.update_progressbar(progress)
@@ -398,11 +458,11 @@ class App(tk.Frame):
             csv_writer = csv.writer(outcsv, delimiter=',', quotechar='"',
                                     quoting=csv.QUOTE_MINIMAL)
             if not self.__file_exists:
-                csv_writer.writerow(self.__OUTFILE_HEADERS)
+                csv_writer.writerow(self.__headers)
         self.print_output(f'Beginning processing...\n')
         self.print_output(f'Parsing with file pattern: {self.__file_pattern}\n')
-        self.process_835s(self.__file_pattern, self.__source_dir)
-        self.print_output(f'Completed stripping 835s in: {self.__source_dir}\n')
+        self.process_files(self.__file_pattern, self.__source_dir)
+        self.print_output(f'Completed stripping {self.__parse_mode}s in: {self.__source_dir}\n')
         self.print_output(f'Results saved to: {self.__outfile_path}')
         self.__run_counter += 1
 

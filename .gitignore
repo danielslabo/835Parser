@@ -6,6 +6,7 @@ Sample_Files/
 Sample/
 .idea/
 .depr/
+*/sample/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
